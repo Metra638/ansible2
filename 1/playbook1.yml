@@ -1,37 +1,42 @@
-- name: task1
+- name: установка сети
   hosts: all
   become: yes
 
   tasks:
-    - name: Include node_exporter role for all hosts
+    - name: установка node_exporter
       include_role:
         name: NODE_EXPORTER
 
-    - name: Include gitlab role for WEBMIN group
+    - name: установка webmin
       include_role:
         name: WEBMIN
 
-    - name: Include mysql role for MYSQL group
+    - name: установка mysql
       include_role:
         name: MYSQL
       when: "'MYSQL' in group_names"
 
-    - name: Include prometheus role for PROMETHEUS-GRAFANA group
+    - name: установка docker
+      include_role:
+        name: DOCKER
+      when: "'WEB' in group_names"
+
+    - name: установка prometheus
       include_role:
         name: PROMETHEUS
       when: "'PROMETHEUS-GRAFANA' in group_names"
 
-    - name: Include prometheus role for PROMETHEUS-GRAFANA group
+    - name: установка grafana
       include_role:
         name: GRAFANA
       when: "'PROMETHEUS-GRAFANA' in group_names"
 
-    - name: Include runner role for RUNNER group
+    - name: установка runner
       include_role:
         name: RUNNER
       when: "'RUNNER' in group_names"
 
-    - name: Include gitlab role for GITLAB group
+    - name: установка gitlab
       include_role:
         name: GITLAB
       when: "'GITLAB' in group_names"
