@@ -1,0 +1,18 @@
+[ANSIBLE]
+VM2 ansible_host=10.0.0.5 ansible_user=user_2 ansible_become_pass=user_2user_2 ansible_ssh_private_key=~/.ssh/id_rsa
+
+[MYSQL]
+VM3 ansible_host=10.0.0.6 ansible_user=user_3 ansible_become_pass=user_3user_3 ansible_ssh_private_key=~/.ssh/id_rsa
+
+[PROMETHEUS-GRAFANA]
+VM4 ansible_host=10.0.0.7 ansible_user=user_4 ansible_become_pass=user_4user_4 ansible_ssh_private_key=~/.ssh/id_rsa
+
+[WEB]
+VM5 ansible_host=10.0.0.8 ansible_user=user_5 ansible_become_pass=user_5user_5 ansible_ssh_private_key=~/.ssh/id_rsa
+
+[RUNNER]
+VM6 ansible_host=10.0.0.9 ansible_user=user_6 ansible_become_pass=user_6user_6 ansible_ssh_private_key=~/.ssh/id_rsa
+
+[GITLAB]
+VM7 ansible_host=10.0.0.10 ansible_user=user_7 ansible_become_pass=user_7user_7 ansible_ssh_private_key=~/.ssh/id_rsa
+

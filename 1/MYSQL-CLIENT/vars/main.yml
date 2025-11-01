@@ -1,0 +1,3 @@
+mysql_client_package_debian: "mysql-client"
+mysql_client_package_redhat: "mysql"
+mysql_client_package_suse: "mysql-client"

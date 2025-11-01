@@ -1,0 +1,17 @@
+webmin_packages:
+  Debian:
+    - perl
+    - net-tools
+    - libnet-ssleay-perl
+    - libauthen-pam-perl
+    - libio-pty-perl
+    - apt-transport-https
+    - openssl
+  RedHat:
+    - perl
+    - net-tools
+    - openssl
+  SUSE:
+    - perl
+    - net-tools
+    - openssl

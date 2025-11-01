@@ -1,0 +1,4 @@
+webmin_version: "2.021"  # Более старая стабильная версия
+# ИЛИ используйте последнюю стабильную
+webmin_version: "2.024"  # Проверьте актуальность на webmin.com
+webmin_mirror: "https://download.webmin.com"

@@ -1,0 +1,73 @@
+- name: Установка зависимостей для apt
+  apt:
+    name:
+      - software-properties-common
+      - curl
+    state: present
+
+- name: Добавление GPG ключа Grafana
+  apt_key:
+    url: https://packages.grafana.com/gpg.key
+    state: present
+
+- name: Добавление репозитория Grafana
+  apt_repository:
+    repo: "deb https://packages.grafana.com/oss/deb stable main"
+    state: present
+    filename: grafana
+
+- name: Обновление кэша пакетов
+  apt:
+    update_cache: yes
+
+- name: Установка Grafana
+  apt:
+    name: grafana
+    state: present
+
+- name: Создание директории для данных Grafana
+  file:
+    path: /var/lib/grafana
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: '0755'
+
+- name: Копирование конфигурационного файла Grafana
+  template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  notify: restart grafana-server
+
+- name: Включение и запуск сервиса Grafana
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Ожидание запуска Grafana
+  wait_for:
+    port: 3000
+    delay: 10
+    timeout: 30
+
+- name: Настройка администратора Grafana
+  uri:
+    url: http://localhost:3000/api/admin/users
+    method: POST
+    body_format: json
+    body:
+      name: "Admin"
+      email: "admin@localhost"
+      login: "admin"
+      password: "admin"
+      OrgId: 1
+    status_code: 200, 412
+    headers:
+      Content-Type: "application/json"
+  register: grafana_admin
+  ignore_errors: yes

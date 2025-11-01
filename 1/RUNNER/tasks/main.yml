@@ -1,0 +1,39 @@
+- name: Скачивание скрипта установки GitLab Runner
+  get_url:
+    url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh
+    dest: /tmp/gitlab-runner-install.sh
+    mode: '0755'
+
+- name: Выполнение скрипта установки репозитория
+  shell: /bin/bash /tmp/gitlab-runner-install.sh
+  args:
+    creates: /etc/apt/sources.list.d/runner_gitlab-runner.list
+
+- name: Обновление кэша пакетов
+  apt:
+    update_cache: yes			# обновлить, чтобы система видела
+
+- name: Установка GitLab Runner
+  apt:
+    name: gitlab-runner
+    state: present
+
+- name: Запуск и включение GitLab Runner
+  systemd:
+    name: gitlab-runner
+    state: started
+    enabled: yes
+
+- name: Проверка установки GitLab Runner
+  command: gitlab-runner --version
+  register: runner_version
+  changed_when: false
+
+- name: Показ версии GitLab Runner
+  debug:
+    msg: "GitLab Runner установлен: {{ runner_version.stdout }}"
+
+- name: Очистка временного скрипта
+  file:
+    path: /tmp/gitlab-runner-install.sh
+    state: absent

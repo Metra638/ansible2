@@ -1,0 +1,39 @@
+- name: task1
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Include node_exporter role for all hosts
+      include_role:
+        name: NODE_EXPORTER
+
+    - name: Include gitlab role for WEBMIN group
+      include_role:
+        name: WEBMIN
+
+    - name: Include mysql role for MYSQL group
+      include_role:
+        name: MYSQL
+      when: "'MYSQL' in group_names"
+
+    - name: Include prometheus role for PROMETHEUS-GRAFANA group
+      include_role:
+        name: PROMETHEUS
+      when: "'PROMETHEUS-GRAFANA' in group_names"
+
+    - name: Include prometheus role for PROMETHEUS-GRAFANA group
+      include_role:
+        name: GRAFANA
+      when: "'PROMETHEUS-GRAFANA' in group_names"
+
+    - name: Include runner role for RUNNER group
+      include_role:
+        name: RUNNER
+      when: "'RUNNER' in group_names"
+
+    - name: Include gitlab role for GITLAB group
+      include_role:
+        name: GITLAB
+      when: "'GITLAB' in group_names"
+
+

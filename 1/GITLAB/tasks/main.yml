@@ -1,0 +1,127 @@
+- name: Установка зависимостей
+  apt:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - postfix
+    state: present
+
+- name: Скачивание скрипта установки GitLab
+  get_url:
+    url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+    dest: /tmp/gitlab-install.sh
+    mode: '0755'
+
+- name: Установка репозитория GitLab
+  shell: /bin/bash /tmp/gitlab-install.sh
+  args:
+    creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+
+- name: Обновление кэша пакетов
+  apt:
+    update_cache: yes
+
+- name: Установка последней версии GitLab
+  apt:
+    name: gitlab-ce
+    state: present
+    update_cache: yes
+
+- name: Получение IP сервера
+  shell: hostname -I | awk '{print $1}'
+  register: server_ip
+  changed_when: false
+
+- name: Создание конфигурации
+  copy:
+    dest: /etc/gitlab/gitlab.rb
+    content: |
+      external_url 'http://{{ server_ip.stdout }}'
+      nginx['listen_port'] = 80
+      gitlab_rails['gitlab_shell_ssh_port'] = 2222
+
+      # Минимальные настройки для надежности
+      puma['worker_processes'] = 2
+      sidekiq['concurrency'] = 5
+
+      # Отключаем все что можно для экономии ресурсов
+      prometheus_monitoring['enable'] = false
+      gitlab_rails['gitlab_default_projects_features_builds'] = true
+
+- name: Запуск настройки GitLab (фоновый режим)
+  shell: |
+    nohup gitlab-ctl reconfigure > /tmp/gitlab-setup.log 2>&1 &
+    echo $!
+  register: reconfigure_pid
+  changed_when: false
+
+- name: Ожидание 10 минут для завершения настройки
+  pause:
+    minutes: 10
+
+- name: Проверка завершения настройки
+  shell: |
+    if ps -p {{ reconfigure_pid.stdout }} > /dev/null 2>&1; then
+      echo "still_running"
+    else
+      echo "finished"
+    fi
+  register: setup_status
+
+- name: Принудительное завершение если зависло
+  shell: |
+    kill -9 {{ reconfigure_pid.stdout }} 2>/dev/null || true
+    gitlab-ctl start
+  when: setup_status.stdout == "still_running"
+
+- name: Ожидание запуска сервисов
+  pause:
+    minutes: 2
+
+- name: Проверка статуса GitLab
+  shell: gitlab-ctl status
+  register: gitlab_status
+  failed_when: false
+
+- name: Показ статуса
+  debug:
+    var: gitlab_status.stdout
+
+- name: Ожидание доступности веб-интерфейса
+  wait_for:
+    port: 80
+    delay: 30
+    timeout: 300
+
+- name: Получение пароля root
+  shell: |
+    if [ -f /etc/gitlab/initial_root_password ]; then
+      cat /etc/gitlab/initial_root_password | grep 'Password:' | cut -d' ' -f2
+    else
+      sudo gitlab-rake "gitlab:password:reset[root]" 2>/dev/null | grep 'Password:' | cut -d' ' -f2 || echo "password_not_set"
+    fi
+  register: gitlab_password
+  changed_when: false
+
+- name: Финальная проверка
+  uri:
+    url: http://{{ server_ip.stdout }}/users/sign_in
+    method: GET
+    status_code: 200
+  register: gitlab_check
+  ignore_errors: yes
+
+- name: Результат установки
+  debug:
+    msg: |
+      GitLab установлен!
+      URL: http://{{ server_ip.stdout }}
+      Логин: root
+      Пароль: {{ gitlab_password.stdout }}
+      Статус: {% if gitlab_check.status == 200 %}РАБОТАЕТ{% else %}ПРОВЕРЬТЕ ВРУЧНУЮ{% endif %}
+
+- name: Очистка временных файлов
+  file:
+    path: /tmp/gitlab-install.sh
+    state: absent
